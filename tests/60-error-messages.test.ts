@@ -13,7 +13,6 @@ describe("errorMessages simple", () => {
     errorMessage: "prompt required",
   };
   let cabidela = new FakeCabidela(schema, { errorMessages: true });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("prompt required", () => {
     expect(() =>
       cabidela.validate({
@@ -21,7 +20,6 @@ describe("errorMessages simple", () => {
       }),
     ).toThrowError(/prompt required/);
   });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("prompt required native", () => {
     cabidela.setOptions({ errorMessages: false });
     expect(() =>
@@ -86,7 +84,6 @@ describe("errorMessages oneOf", () => {
     ],
   };
   let cabidela = new FakeCabidela(schema, { errorMessages: true });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("either prompt or messages", () => {
     expect(() =>
       cabidela.validate({
@@ -94,7 +91,6 @@ describe("errorMessages oneOf", () => {
       }),
     ).toThrowError(/oneOf at '.' not met: prompt required, messages required/);
   });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("messages need role and content", () => {
     expect(() =>
       cabidela.validate({

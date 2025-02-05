@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "moduleResolution": "Bundler",
+    "module": "ESNext",
+    "noEmit": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "src",
@@ -12,19 +15,18 @@
     "inlineSourceMap": false,
     "listEmittedFiles": false,
     "listFiles": false,
-    "moduleResolution": "node",
     "noFallthroughCasesInSwitch": true,
     "pretty": true,
     "resolveJsonModule": true,
     "rootDir": ".",
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "traceResolution": false,
     "target": "esnext",
-    "module": "esnext",
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": ["@types/node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "scripts", "tests", "benchmarks"],
   "files": ["src/index.ts", "src/helpers.ts"]
 }

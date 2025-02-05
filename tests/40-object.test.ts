@@ -19,7 +19,6 @@ describe("additionalProperties: false", () => {
       validator.validate({ number: 1600, street_name: "Pennsylvania", street_type: "Avenue" }),
     ).not.toThrowError();
   });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("additional", () => {
     expect(() =>
       validator.validate({ number: 1600, street_name: "Pennsylvania", street_type: "Avenue", direction: "NW" }),
@@ -130,7 +129,6 @@ describe(`additionalProperties: combined extended schemas`, () => {
       }),
     ).not.toThrowError();
   });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("something that doesn't belong", () => {
     expect(() =>
       validator.validate({
@@ -142,7 +140,6 @@ describe(`additionalProperties: combined extended schemas`, () => {
       }),
     ).toThrowError();
   });
-  // @ts-ignore
   test.skipIf(process.env.AJV)("should fail", () => {
     let schema = {
       allOf: [

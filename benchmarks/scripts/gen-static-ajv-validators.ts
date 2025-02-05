@@ -4,9 +4,7 @@ import Ajv from "ajv";
 import ajvErrors from "ajv-errors";
 
 import standaloneCode from "ajv/dist/standalone";
-// @ts-ignore
 import * as fs from "node:fs";
-// @ts-ignore
 import { twoLevelImageSchema, imageSchema, allOfTwo, anyOfTwo, oneOfTwo, allOfSimple } from "../lib/schemas-n-payloads";
 
 const schemas: any = [];
@@ -33,6 +31,5 @@ const patchedModuleCode = moduleCode.replace(
   "function ucs2length(str) { const len = str.length; let length = 0; let pos = 0; let value; while (pos < len) { length++; value = str.charCodeAt(pos++); if (value >= 0xd800 && value <= 0xdbff && pos < len) { value = str.charCodeAt(pos); if ((value & 0xfc00) === 0xdc00) pos++; } } return length; }",
 );
 
-// @ts-ignore
 console.log(`Writing validators`);
 fs.writeFileSync("../../tests/lib/static-validators.js", patchedModuleCode);

@@ -14,7 +14,6 @@ export class FakeCabidela {
   }
 
   newInstance() {
-    // @ts-ignore
     if (process.env.AJV || this.options.useAJV) {
       const ajv = new Ajv({
         allErrors: true,
@@ -23,7 +22,6 @@ export class FakeCabidela {
         useDefaults: this.options.applyDefaults ? true : false,
       });
       this.validator = ajv.compile(this.schema);
-      // @ts-ignore
     } else if (process.env.AJVStatic || this.options.useAJVStatic) {
       this.validator = Validators[`#/definitions/${this.schema.$id}`];
       if(!this.validator) {
@@ -46,7 +44,6 @@ export class FakeCabidela {
 
   validate(payload: any) {
     // do the test using Ajv
-    // @ts-ignore
     if (process.env.AJV || this.options.useAJV || this.options.useAJVStatic || process.env.AJVStatic) {
       const valid = this.validator(payload);
       if (!valid) {

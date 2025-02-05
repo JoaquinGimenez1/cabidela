@@ -1,34 +1,44 @@
 {
   "name": "@cloudflare/cabidela",
-  "version": "0.0.15",
-  "type": "module",
+  "version": "0.0.17",
   "description": "Cabidela is a small, fast, eval-less, Cloudflare Workers compatible, dynamic JSON Schema validator",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "author": "Celso Martinho <celso@cloudflare.com>",
-  "license": "Apache 2.0",
+  "license": "Cloudflare",
   "scripts": {
     "test": "npm run test-cabidela",
     "test-all": "npm run test-cabidela && npm run test-ajv",
     "test-cabidela": "vitest run --dir tests --reporter=verbose",
     "test-ajv": "AJV=true vitest run --dir tests --reporter=verbose",
     "benchmark": "vitest bench --dir benchmarks --reporter=verbose --watch false",
-    "build": "npm run build-tsc && npm run build-esbuild",
-    "build-esbuild": "esbuild src/index.ts --bundle --outfile=dist/index.js --sourcemap --format=esm",
-    "build-tsc": "tsc --declaration --emitDeclarationOnly --outDir ./dist --target esnext src/index.ts",
+    "build": "rm -rf dist/ && tsup src/index.ts --format cjs,esm --dts --config tsconfig.json",
     "dry-publish": "npm pack --dry-run"
   },
   "keywords": [
-    "json-schema"
+    "json-schema",
+    "cloudflare",
+    "cloudflare workers"
   ],
   "files": [
-    "dist/*"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cloudflare/cabidela.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cloudflare/cabidela/issues"
+  },
   "devDependencies": {
+    "@types/node": "^22.13.1",
     "@vitest/ui": "^3.0.3",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
-    "esbuild": "^0.24.2",
+    "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.3"
   }
