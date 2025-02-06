@@ -28,7 +28,7 @@ dev:
 	pnpm run dev
 
 deploy:
-	wrangler deploy --env $(or $(ENV),$(DEFAULT_ENV))
+	npx wrangler pages deploy dist --project-name cabidela --branch main --skip-caching
 
 .PHONY: deploy test build
 

@@ -6,7 +6,7 @@
 
 
 <p align="center">
-    <em>Small, fast, eval-less, [Cloudflare Workers](https://developers.cloudflare.com/workers/) compatible, dynamic JSON Schema validator.</em>
+    <em>Small, fast, eval-less, <a href="https://developers.cloudflare.com/workers/">Cloudflare Workers</a> compatible, dynamic JSON Schema validator.</em>
 </p>
 
 <hr />
