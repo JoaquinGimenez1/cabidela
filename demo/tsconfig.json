@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["esnext", "dom"],
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "types": ["@types/node"],
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "checkJs": false,
+    "noEmit": false,
+    "jsx": "react",
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "~/*": ["./*"]
+    },
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "files": ["app/index.tsx"],
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "files": true,
+    "exclude": ["node_modules", "test"],
+    "transpileOnly": true
+  }
+}

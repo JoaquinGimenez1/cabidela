@@ -11,9 +11,9 @@
 
 <hr />
 
-# What is
+## What is
 
-Cabidela is a small, fast, eval-less, [Cloudflare Workers](https://developers.cloudflare.com/workers/) compatible, dynamic JSON Schema validator. It implements a large subset of <https://json-schema.org/draft/2020-12/json-schema-validation> that should cover most use-cases. But not all. See limitations below.
+Cabidela is a small, fast, eval-less, Cloudflare Workers compatible, dynamic JSON Schema validator. It implements a large subset of <https://json-schema.org/draft/2020-12/json-schema-validation> that should cover most use-cases. But not all. See limitations below.
 
 ## How to use
 

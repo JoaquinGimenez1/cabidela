@@ -2,3 +2,6 @@ node_modules/
 package-lock.json
 scripts/*
 dist/*
+demo/dist/*
+demo/package-lock.json
+demo/.wrangler
