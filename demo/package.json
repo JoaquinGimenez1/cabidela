@@ -6,13 +6,11 @@
   "scripts": {
     "clean": "rm -rf node_modules/.cache/wrangler",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "env": "eval $(cat .dev.vars) env",
     "build": "npx rollup --bundleConfigAsCjs -c rollup.config.mjs",
-    "start": "eval $(cat .dev.vars) npx wrangler pages dev dist --persist-to ~/.wrangler",
+    "start": "npx wrangler pages dev dist --persist-to ~/.wrangler",
     "rollup": "npx rollup --bundleConfigAsCjs -c rollup.config.mjs --watch --no-watch.clearScreen",
     "dev": "npx concurrently --raw --names \"rollup,admin\" --handle-input --default-input-target admin \"npm run rollup\" \"npm start\"",
-    "deploy": "make deploy",
-    "deploy-production": "ENV=production make deploy"
+    "deploy": "make deploy"
   },
   "keywords": [],
   "author": "",
