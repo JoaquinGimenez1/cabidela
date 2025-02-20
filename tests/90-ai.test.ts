@@ -154,3 +154,46 @@ describe("Text embeddings", () => {
     expect(() => validator.validate({ text: "Tell me a joke about Cloudflare" })).not.toThrowError();
   });
 });
+
+describe("Structured outputs", () => {
+  let schema = {
+    title: "JSON Mode",
+    type: "object",
+    oneOf: [
+      {
+        properties: {
+          type: {
+            type: "string",
+            const: "json_object",
+          },
+        },
+        required: ["type"],
+      },
+      {
+        properties: {
+          type: {
+            type: "string",
+            const: "json_schema",
+          },
+          json_schema: {},
+        },
+        required: ["type", "json_schema"],
+      },
+    ],
+  };
+
+  let validator = new FakeCabidela(schema, { errorMessages: true });
+
+  test("json_object type", () => {
+    expect(() => validator.validate({ type: "json_object" })).not.toThrowError();
+  });
+  test("json_schema type", () => {
+    expect(() => validator.validate({ type: "json_schema", json_schema: { something: "here" } })).not.toThrowError();
+  });
+  test("json_schema type", () => {
+    expect(() => validator.validate({ type: "json_schema", json_schema: { something: "here" } })).not.toThrowError();
+  });
+  test("json_schema type without schema", () => {
+    expect(() => validator.validate({ type: "json_schema" })).toThrowError();
+  });
+});
