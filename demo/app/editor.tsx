@@ -10,8 +10,7 @@ const codeValidators: any = {
 };
 
 export const Editor = (props: any = {}) => {
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <>
@@ -19,7 +18,7 @@ export const Editor = (props: any = {}) => {
         <ReactEditor
           value={props.content || ""}
           onValueChange={(code) => {
-            props.setContent(code);
+            props.setContent && props.setContent(code);
           }}
           highlight={(code) => {
             return props.validation && languages[props.validation]

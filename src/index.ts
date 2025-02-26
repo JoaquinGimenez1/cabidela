@@ -12,8 +12,10 @@ export type SchemaNavigation = {
   payload: any;
   evaluatedProperties: Set<string>;
   carryProperties?: boolean;
+  deferredApplyDefaults?: boolean;
   absorvErrors?: boolean;
   errors: Set<string>;
+  defaultsCallbacks: Array<any>;
 };
 
 export class Cabidela {
@@ -51,7 +53,9 @@ export class Cabidela {
     let matchCount = 0;
     const { metadata, resolvedObject } = resolvePayload(needle.path, needle.payload);
 
-    const unevaluatedProperties = metadata.properties.difference(contextEvaluatedProperties);
+    const unevaluatedProperties = new Set(
+      metadata.properties.map((r: string) => pathToString([...needle.path, r])),
+    ).difference(contextEvaluatedProperties);
 
     // Setting the additionalProperties schema to false means no additional properties will be allowed.
     if (contextAdditionalProperties === false) {
@@ -69,15 +73,16 @@ export class Cabidela {
       for (let property of unevaluatedProperties) {
         if (
           this.parseSubSchema({
-            path: [property],
+            path: [property.split(".").slice(-1)[0]],
             schema: contextAdditionalProperties,
             payload: resolvedObject,
             evaluatedProperties: new Set(),
             errors: new Set(),
+            defaultsCallbacks: [],
           })
         ) {
           matchCount++;
-          needle.evaluatedProperties.add(property);
+          needle.evaluatedProperties.add(pathToString([property]));
         }
       }
     }
@@ -109,14 +114,13 @@ export class Cabidela {
 
     if (needle.schema.hasOwnProperty("properties")) {
       for (let property in needle.schema.properties) {
-        if (
-          this.parseSubSchema({
-            ...needle,
-            path: [...needle.path, property],
-            schema: needle.schema.properties[property],
-          })
-        ) {
-          localEvaluatedProperties.add(property);
+        const matches = this.parseSubSchema({
+          ...needle,
+          path: [...needle.path, property],
+          schema: needle.schema.properties[property],
+        });
+        if (matches > 0) {
+          localEvaluatedProperties.add(pathToString([...needle.path, property]));
           matchCount++;
         }
       }
@@ -144,7 +148,9 @@ export class Cabidela {
     // this has to be last
     if (needle.schema.hasOwnProperty("required")) {
       if (
-        new Set(needle.schema.required).difference(needle.evaluatedProperties.union(localEvaluatedProperties)).size > 0
+        new Set(needle.schema.required.map((r: string) => pathToString([...needle.path, r]))).difference(
+          needle.evaluatedProperties.union(localEvaluatedProperties),
+        ).size > 0
       ) {
         this.throw(`required properties at '${pathToString(needle.path)}' is '${needle.schema.required}'`, needle);
       }
@@ -154,33 +160,43 @@ export class Cabidela {
 
   parseList(list: any, needle: SchemaNavigation, breakCondition?: Function) {
     let rounds = 0;
+    const defaultsCallbacks: any = [];
+
     for (let option in list) {
       try {
-        rounds += this.parseSubSchema({
+        const matches = this.parseSubSchema({
           ...needle,
           schema: { type: needle.schema.type, ...list[option] },
-          carryProperties: true,
+          carryProperties: false,
           absorvErrors: true,
+          deferredApplyDefaults: true,
         });
+        rounds += matches;
         if (breakCondition && breakCondition(rounds)) break;
+        defaultsCallbacks.push(...needle.defaultsCallbacks);
+        needle.defaultsCallbacks = [];
       } catch (e: any) {
         needle.errors.add(e.message as string);
+        needle.defaultsCallbacks = [];
       }
     }
+    for (const callback of defaultsCallbacks) callback();
+    needle.defaultsCallbacks = [];
     return rounds;
   }
 
   // Parses a JSON Schema sub-schema object - reentrant
-  parseSubSchema(needle: SchemaNavigation) {
+  parseSubSchema(needle: SchemaNavigation): number {
     if (needle.schema == undefined) {
       this.throw(`No schema for path '${pathToString(needle.path)}'`, needle);
     }
 
     // To validate against oneOf, the given data must be valid against exactly one of the given subschemas.
     if (needle.schema.hasOwnProperty("oneOf")) {
-      if (this.parseList(needle.schema.oneOf, needle) !== 1) {
+      const rounds = this.parseList(needle.schema.oneOf, needle, (r: number) => r !== 1);
+      if (rounds !== 1) {
         if (needle.path.length == 0) {
-          this.throw(`oneOf at '${pathToString(needle.path)}' not met`, needle);
+          this.throw(`oneOf at '${pathToString(needle.path)}' not met, ${rounds} matches`, needle);
         }
         return 0;
       }
@@ -265,7 +281,9 @@ export class Cabidela {
       // This has to be after handling enum
       if (needle.schema.hasOwnProperty("type") && !metadata.types.has(needle.schema.type)) {
         this.throw(
-          `Type mismatch of '${pathToString(needle.path)}', '${needle.schema.type}' not in ${JSON.stringify(Array.from(metadata.types))}`,
+          `Type mismatch of '${pathToString(needle.path)}', '${needle.schema.type}' not in ${Array.from(metadata.types)
+            .map((e) => `'${e}'`)
+            .join(",")}`,
           needle,
         );
       }
@@ -305,24 +323,31 @@ export class Cabidela {
         }
       }
       if (needle.carryProperties) {
-        needle.evaluatedProperties.add(needle.path[needle.path.length - 1]);
+        needle.evaluatedProperties.add(pathToString(needle.path));
       }
       return 1;
     }
     // Apply defaults
     if (this.options.applyDefaults === true && needle.schema.hasOwnProperty("default")) {
-      needle.path.reduce(function (prev, curr, index) {
-        // create objects as needed along the path, if they don't exist, so we can apply defaults at the end
-        if (prev[curr] === undefined) {
-          prev[curr] = {};
-        }
-        if (index == needle.path.length - 1) {
-          prev[curr] = needle.schema.default;
-          // defaults add to evaluatedProperties and can meet "required" constraints
-          needle.evaluatedProperties.add(needle.path[needle.path.length - 1]);
-        }
-        return prev ? prev[curr] : undefined;
-      }, needle.payload);
+      const applyDefaults = () => {
+        needle.path.reduce(function (prev, curr, index) {
+          // create objects as needed along the path, if they don't exist, so we can apply defaults at the end
+          if (prev[curr] === undefined) {
+            prev[curr] = {};
+          }
+          if (index == needle.path.length - 1) {
+            prev[curr] = needle.schema.default;
+            // defaults add to evaluatedProperties and can meet "required" constraints
+            needle.evaluatedProperties.add(pathToString(needle.path));
+          }
+          return prev ? prev[curr] : undefined;
+        }, needle.payload);
+      };
+      if (needle.deferredApplyDefaults === true) {
+        needle.defaultsCallbacks.push(applyDefaults);
+      } else {
+        applyDefaults();
+      }
     }
     return 0;
   }
@@ -330,6 +355,7 @@ export class Cabidela {
   validate(payload: any) {
     const needle: SchemaNavigation = {
       errors: new Set(),
+      defaultsCallbacks: [],
       evaluatedProperties: new Set(),
       path: [],
       schema: this.schema,

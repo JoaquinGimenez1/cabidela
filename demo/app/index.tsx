@@ -1,7 +1,7 @@
 import "~/common/styles/index.scss";
 import React, { useContext, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { Cabidela } from "@cloudflare/cabidela";
+import { Cabidela } from "../..";
 import { Editor } from "./editor";
 import { isJSON } from "./tools";
 import { payloadExamples } from "./payloads";
@@ -14,6 +14,8 @@ const Validator = () => {
     select: 0,
   }) as any;
 
+  const [modified, setModified] = useState(false);
+
   const [error, setError] = useState([] as Array<string>);
 
   useEffect(() => {
@@ -24,10 +26,18 @@ const Validator = () => {
     if (!isJSON(forms.payload)) {
       errors.push("Payload is not valid JSON");
     }
+    let payload;
     try {
-      const cabidela = new Cabidela(JSON5.parse(forms.schema));
-      cabidela.validate(JSON5.parse(forms.payload));
+      payload = JSON5.parse(forms.payload);
+      const cabidela = new Cabidela(JSON5.parse(forms.schema), { applyDefaults: true });
+      cabidela.validate(payload);
+      if (JSON.stringify(payload) !== JSON.stringify(JSON5.parse(forms.payload))) {
+        setModified(payload);
+      } else {
+        setModified(false);
+      }
     } catch (e: any) {
+      setModified(false);
       errors.push(e.message);
     }
     setError(errors);
@@ -95,7 +105,6 @@ const Validator = () => {
                 validation="json"
                 content={forms.schema}
                 setContent={(c: string) => {
-                  console.log("setting schema");
                   setForms({ ...forms, schema: c });
                 }}
               />
@@ -108,11 +117,20 @@ const Validator = () => {
                 validation="json"
                 content={forms.payload}
                 setContent={(c: string) => {
-                  console.log("setting schema");
                   setForms({ ...forms, payload: c });
                 }}
               />
             </label>
+            {modified && (
+              <label>
+                <span>Modified payload</span>
+                <Editor
+                  validation="json"
+                  content={JSON5.stringify(modified, { replacer: null, space: 2, quote: '"' })}
+                  setContent={false}
+                />
+              </label>
+            )}
           </div>
         </div>
 
@@ -132,8 +150,6 @@ const Validator = () => {
             <a href="https://github.com/cloudflare/cabidela">https://github.com/cloudflare/cabidela</a>
           </p>
         </div>
-
-
       </div>
     </>
   );

@@ -16,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cloudflare/cabidela": "^0.0.17",
     "@headlessui/tailwindcss": "^0.2.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
