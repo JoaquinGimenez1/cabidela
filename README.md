@@ -140,7 +140,7 @@ console.log(payload);
 Using `applyDefaults` with `oneOf` will one apply the default value of the sub-schema that matches the condition. For
 example, using this schema:
 
-```json
+```javascript
   {
     type: "object",
     oneOf: [
