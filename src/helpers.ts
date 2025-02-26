@@ -1,7 +1,7 @@
 export type metaData = {
   types: Set<string>;
   size: number;
-  properties: Set<string>;
+  properties: Array<string>;
 };
 
 export type resolvedResponse = {
@@ -56,8 +56,8 @@ export const pathToString = (path: Array<string | number>) => {
 
 export const getMetaData = (value: any): metaData => {
   let size = 0;
-  let types = new Set([]);
-  let properties = new Set([]);
+  let types:any = new Set([]);
+  let properties:any = [];
   if (value === null) {
     types.add("null");
   } else if (typeof value == "string") {
@@ -81,7 +81,7 @@ export const getMetaData = (value: any): metaData => {
   } else if (typeof value == "object") {
     types.add("object");
     size = Object.keys(value).length;
-    properties = new Set(Object.keys(value));
+    properties = Object.keys(value);
   }
   return { types, size, properties };
 };
