@@ -22,7 +22,7 @@ export const payloadExamples = [
         { type: "number", multipleOf: 3 },
       ],
     },
-    payload: 5
+    payload: 5,
   },
   {
     title: "Two required properties",
@@ -133,5 +133,43 @@ export const payloadExamples = [
       messages: [{ role: "user", content: "Hello" }],
       prompt: "this doesn't make sense",
     },
+  },
+  {
+    title: "oneOf defaults",
+    schema: {
+      type: "object",
+      oneOf: [
+        {
+          properties: {
+            sun: {
+              type: "number",
+            },
+            moon: {
+              type: "number",
+              default: 9000,
+            },
+            flowers: {
+              type: "number",
+              default: 9000,
+            },
+          },
+          required: ["sun"],
+        },
+        {
+          properties: {
+            sun: {
+              type: "number",
+              default: 9000,
+            },
+            moon: {
+              type: "number",
+              default: 9000,
+            },
+          },
+          required: ["moon"],
+        },
+      ],
+    },
+    payload: { sun: 10 },
   },
 ];

@@ -281,7 +281,9 @@ export class Cabidela {
       // This has to be after handling enum
       if (needle.schema.hasOwnProperty("type") && !metadata.types.has(needle.schema.type)) {
         this.throw(
-          `Type mismatch of '${pathToString(needle.path)}', '${needle.schema.type}' not in ${JSON.stringify(Array.from(metadata.types))}`,
+          `Type mismatch of '${pathToString(needle.path)}', '${needle.schema.type}' not in ${Array.from(metadata.types)
+            .map((e) => `'${e}'`)
+            .join(",")}`,
           needle,
         );
       }
