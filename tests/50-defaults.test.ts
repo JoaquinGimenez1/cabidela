@@ -68,7 +68,10 @@ describe("applyDefaults", () => {
     expect(payload.messages[1].role).toStrictEqual("system");
     expect(payload.messages[2].role).toStrictEqual("user");
   });
-  it("deep defaults non existant object", () => {
+  // AJv does not support default values for oneOf
+  // See "Unexpected results when using removeAdditional with anyOf/oneOf" at https://ajv.js.org/guide/modifying-data.html
+  // https://github.com/ajv-validator/ajv/issues/127
+  test.skipIf(process.env.AJV)("deep defaults non existant object", () => {
     cabidela.setSchema({
       oneOf: [
         {
@@ -112,5 +115,127 @@ describe("applyDefaults", () => {
       response: "a joke",
       usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     });
+  });
+});
+
+describe("oneOf defaults", () => {
+  let schema = {
+    type: "object",
+    oneOf: [
+      {
+        properties: {
+          shouldnotbehere: {
+            type: "number",
+            default: 9000,
+          },
+          shouldbehere: {
+            type: "number",
+            default: 9000,
+          },
+        },
+        required: ["shouldnotbehere"],
+      },
+      {
+        properties: {
+          prompts: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                prompt: {
+                  type: "string",
+                  minLength: 1,
+                },
+                stream: {
+                  type: "boolean",
+                  default: false,
+                },
+                max_tokens: {
+                  type: "integer",
+                  default: 256,
+                },
+              },
+            },
+          },
+        },
+        required: ["prompts"],
+      },
+    ],
+  };
+  let validator = new FakeCabidela(schema, { applyDefaults: true });
+  test.skipIf(process.env.AJV)("oneOf prompts met", () => {
+    let payload = {
+      prompts: [
+        {
+          stream: false,
+          temperature: 0.7,
+          prompt: "tell me a joke",
+        },
+        {
+          stream: false,
+          temperature: 0.7,
+          prompt: "write an email from user to provider.",
+          max_tokens: 100,
+        },
+        {
+          stream: false,
+          temperature: 0.7,
+          prompt: "tell me a joke about llamas",
+          max_tokens: 100,
+        },
+      ],
+    };
+    expect(() => validator.validate(payload)).not.toThrowError();
+    expect(payload.prompts[0].max_tokens).toStrictEqual(256);
+  });
+  test.skipIf(process.env.AJV)("oneOf shouldnotbehere met", () => {
+    let payload = {
+      shouldnotbehere: 10,
+    };
+    expect(() => validator.validate(payload)).not.toThrowError();
+    // @ts-ignore
+    expect(payload.shouldbehere).toStrictEqual(9000);
+  });
+  test.skipIf(process.env.AJV)("oneOf options with same property names", () => {
+    validator.setSchema({
+      type: "object",
+      oneOf: [
+        {
+          properties: {
+            sun: {
+              type: "number",
+            },
+            moon: {
+              type: "number",
+              default: 9000,
+            },
+            flowers: {
+              type: "number",
+              default: 9000,
+            },
+          },
+          required: ["sun"],
+        },
+        {
+          properties: {
+            sun: {
+              type: "number",
+              default: 9000,
+            },
+            moon: {
+              type: "number",
+              default: 9000,
+            },
+          },
+          required: ["moon"],
+        },
+      ],
+    });
+    let payload: any = { sun: 10 };
+    expect(() => validator.validate(payload)).not.toThrowError();
+    expect(payload).toStrictEqual({ sun: 10, moon: 9000, flowers: 9000 });
+    payload = { moon: 10 };
+    expect(() => validator.validate(payload)).not.toThrowError();
+    expect(payload).toStrictEqual({ sun: 9000, moon: 10 });
   });
 });

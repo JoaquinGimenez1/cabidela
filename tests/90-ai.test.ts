@@ -190,9 +190,6 @@ describe("Structured outputs", () => {
   test("json_schema type", () => {
     expect(() => validator.validate({ type: "json_schema", json_schema: { something: "here" } })).not.toThrowError();
   });
-  test("json_schema type", () => {
-    expect(() => validator.validate({ type: "json_schema", json_schema: { something: "here" } })).not.toThrowError();
-  });
   test("json_schema type without schema", () => {
     expect(() => validator.validate({ type: "json_schema" })).toThrowError();
   });
