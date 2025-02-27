@@ -13,6 +13,24 @@ export const includesAll = (arr: Array<any>, values: Array<any>) => {
   return values.every((v) => arr.includes(v));
 };
 
+export const traverseSchema = (definitions: any, obj: any, cb: any = () => {}) => {
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== null && typeof obj[key] === "object") {
+      traverseSchema(definitions, obj[key], (value: any) => {
+        obj[key] = value;
+      });
+    } else {
+      if (key === "$ref") {
+        const parts = obj[key].split("#");
+        const id = parts[0];
+        const refPath = parts[1].split("/").filter((e: string) => e !== "");
+        const { resolvedObject } = resolvePayload(refPath, definitions[id]);
+        cb(resolvedObject);
+      }
+    }
+  });
+};
+
 /* Resolves a path in an object
 
      obj = {

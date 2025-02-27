@@ -1,9 +1,10 @@
-import { resolvePayload, pathToString } from "./helpers";
+import { resolvePayload, pathToString, traverseSchema } from "./helpers";
 
 export type CabidelaOptions = {
   applyDefaults?: boolean;
   errorMessages?: boolean;
   fullErrors?: boolean;
+  subSchemas?: Array<any>;
 };
 
 export type SchemaNavigation = {
@@ -17,13 +18,15 @@ export type SchemaNavigation = {
 };
 
 export class Cabidela {
-  public schema: any;
-  public options: CabidelaOptions;
+  private schema: any;
+  private options: CabidelaOptions;
+  private definitions: any = {};
 
   constructor(schema: any, options?: CabidelaOptions) {
     this.schema = schema;
     this.options = {
       fullErrors: true,
+      subSchemas: [],
       applyDefaults: false,
       errorMessages: false,
       ...(options || {}),
@@ -34,8 +37,32 @@ export class Cabidela {
     this.schema = schema;
   }
 
+  addSubSchema(subSchema: any) {
+    if (subSchema.hasOwnProperty("$id")) {
+      const url = URL.parse(subSchema["$id"]);
+      if (url) {
+        delete subSchema["$id"];
+        this.definitions[url.pathname.substring(1)] = subSchema;
+      } else {
+        throw new Error(
+          "subSchemas need a valid retrieval URI $id https://json-schema.org/understanding-json-schema/structuring#retrieval-uri",
+        );
+      }
+    } else {
+      throw new Error("subSchemas need $id https://json-schema.org/understanding-json-schema/structuring#id");
+    }
+
+    traverseSchema(this.definitions, this.schema);
+  }
+
+  getSchema() {
+    return this.schema;
+  }
+
+  combineSchemas() {}
+
   setOptions(options: CabidelaOptions) {
-    this.options = options;
+    this.options = { ...this.options, ...options };
   }
 
   throw(message: string, needle: SchemaNavigation) {
