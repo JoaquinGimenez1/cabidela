@@ -23,9 +23,15 @@ export const traverseSchema = (definitions: any, obj: any, cb: any = () => {}) =
       if (key === "$ref") {
         const parts = obj[key].split("#");
         const id = parts[0];
-        const refPath = parts[1].split("/").filter((e: string) => e !== "");
-        const { resolvedObject } = resolvePayload(refPath, definitions[id]);
-        cb(resolvedObject);
+        const refPath = parts[1].split("/").slice(-1);
+        const { resolvedObject } = resolvePayload([refPath], definitions[id]);
+        if (resolvedObject) {
+          cb(resolvedObject);
+        } else {
+          throw new Error(
+            `Could not resolve '${obj[key]}' $ref`,
+          );
+        }
       }
     }
   });
@@ -74,8 +80,8 @@ export const pathToString = (path: Array<string | number>) => {
 
 export const getMetaData = (value: any): metaData => {
   let size = 0;
-  let types:any = new Set([]);
-  let properties:any = [];
+  let types: any = new Set([]);
+  let properties: any = [];
   if (value === null) {
     types.add("null");
   } else if (typeof value == "string") {

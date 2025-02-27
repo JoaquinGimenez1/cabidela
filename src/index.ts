@@ -33,18 +33,23 @@ export class Cabidela {
       errorMessages: false,
       ...(options || {}),
     };
+    if ((this.options.subSchemas as []).length > 0) {
+      for (const subSchema of this.options.subSchemas as []) {
+        this.addSchema(subSchema, false);
+      }
+      traverseSchema(this.definitions, this.schema);
+    }
   }
 
   setSchema(schema: any) {
     this.schema = schema;
   }
 
-  addSubSchema(subSchema: any) {
+  addSchema(subSchema: any, combine: boolean = true) {
     if (subSchema.hasOwnProperty("$id")) {
       const url = URL.parse(subSchema["$id"]);
       if (url) {
-        delete subSchema["$id"];
-        this.definitions[url.pathname.substring(1)] = subSchema;
+        this.definitions[url.pathname.split("/").slice(-1)[0]] = subSchema;
       } else {
         throw new Error(
           "subSchemas need a valid retrieval URI $id https://json-schema.org/understanding-json-schema/structuring#retrieval-uri",
@@ -53,15 +58,12 @@ export class Cabidela {
     } else {
       throw new Error("subSchemas need $id https://json-schema.org/understanding-json-schema/structuring#id");
     }
-
-    traverseSchema(this.definitions, this.schema);
+    if (combine == true) traverseSchema(this.definitions, this.schema);
   }
 
   getSchema() {
     return this.schema;
   }
-
-  combineSchemas() {}
 
   setOptions(options: CabidelaOptions) {
     this.options = { ...this.options, ...options };
