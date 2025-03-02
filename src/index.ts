@@ -33,6 +33,10 @@ export class Cabidela {
       errorMessages: false,
       ...(options || {}),
     };
+    if (this.schema.hasOwnProperty("$defs")) {
+      this.definitions["$defs"] = this.schema["$defs"];
+      delete this.schema["$defs"];
+    }
     if ((this.options.subSchemas as []).length > 0) {
       for (const subSchema of this.options.subSchemas as []) {
         this.addSchema(subSchema, false);
@@ -102,7 +106,7 @@ export class Cabidela {
       for (let property of unevaluatedProperties) {
         if (
           this.parseSubSchema({
-            path: [property.split(".").slice(-1)[0]],
+            path: [property.split("/").slice(-1)[0]],
             schema: contextAdditionalProperties,
             payload: resolvedObject,
             evaluatedProperties: new Set(),
@@ -181,7 +185,7 @@ export class Cabidela {
           needle.evaluatedProperties.union(localEvaluatedProperties),
         ).size > 0
       ) {
-        this.throw(`required properties at '${pathToString(needle.path)}' is '${needle.schema.required}'`, needle);
+        this.throw(`required properties at '${pathToString(needle.path)}' are '${needle.schema.required}'`, needle);
       }
     }
     return matchCount ? true : false;
@@ -218,6 +222,22 @@ export class Cabidela {
   parseSubSchema(needle: SchemaNavigation): number {
     if (needle.schema == undefined) {
       this.throw(`No schema for path '${pathToString(needle.path)}'`, needle);
+    }
+
+    // https://json-schema.org/understanding-json-schema/reference/combining#not
+    if (needle.schema.hasOwnProperty("not")) {
+      let pass = false;
+      try {
+        this.parseSubSchema({
+          ...needle,
+          schema: needle.schema.not,
+        });
+      } catch (e: any) {
+        pass = true;
+      }
+      if(pass==false) {
+        this.throw(`not at '${pathToString(needle.path)}' not met`, needle);
+      }
     }
 
     // To validate against oneOf, the given data must be valid against exactly one of the given subschemas.

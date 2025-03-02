@@ -180,9 +180,9 @@ example, using this schema:
 - The payload `{ moon: 10}` will be modified to `{ sun: 9000, moon: 10 }`.
 - The payload `{ saturn: 10}` will throw an error because no condition is met.
 
-### $id, $ref
+### $id, $ref, $defs
 
-The keywords [$id](https://json-schema.org/understanding-json-schema/structuring#id) and [$ref](https://json-schema.org/understanding-json-schema/structuring#dollarref) can be used to build and maintain complex schemas where the reusable parts are defined in separate schemas.
+The keywords [$id](https://json-schema.org/understanding-json-schema/structuring#id), [$ref](https://json-schema.org/understanding-json-schema/structuring#dollarref) and [$defs](https://json-schema.org/understanding-json-schema/structuring#defs) can be used to build and maintain complex schemas where the reusable parts are defined in separate schemas.
 
 The following is the main schema and a `customer` sub-schema that defines the `contacts` and `address` properties.
 
@@ -196,8 +196,18 @@ const schema = {
     name: { type: "string" },
     contacts: { $ref: "customer#/contacts" },
     address: { $ref: "customer#/address" },
+    balance: { $ref: "$defs#/balance" },
   },
   required: ["name", "contacts", "address"],
+  "$defs": {
+    "balance": {
+      type: "object",
+      prope      properties: {
+        currency: { type: "string" },
+        amount: { type: "number" },
+      },
+    }
+  }
 };
 
 const contactSchema = {
@@ -223,9 +233,6 @@ const contactSchema = {
 };
 
 const cabidela = new Cabidela(schema, { subSchemas: [contactSchema] });
-
-// you can also use
-// cabidela.addSchema(contactSchema);
 
 cabidela.validate({
   name: "John",
@@ -324,7 +331,7 @@ Here are some results:
     59.75x faster than Ajv
 
   Cabidela - benchmarks/80-big-ops.bench.js > allOf, two properties
-    1701.95x faster than Ajv
+   1701.95x faster than Ajv
 
   Cabidela - benchmarks/80-big-ops.bench.js > allOf, two objects
     1307.04x faster than Ajv
@@ -349,7 +356,6 @@ Cabidela supports most of JSON Schema specification, and should be useful for ma
 - Multiple (array of) types `{ "type": ["number", "string"] }`
 - Regular expressions
 - Pattern properties
-- `not`
 - `dependentRequired`, `dependentSchemas`, `If-Then-Else`
 
 yet.
