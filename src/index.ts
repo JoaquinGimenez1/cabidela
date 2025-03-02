@@ -235,7 +235,7 @@ export class Cabidela {
       } catch (e: any) {
         pass = true;
       }
-      if(pass==false) {
+      if (pass == false) {
         this.throw(`not at '${pathToString(needle.path)}' not met`, needle);
       }
     }
@@ -371,6 +371,14 @@ export class Cabidela {
             break;
         }
       }
+      if (needle.schema.hasOwnProperty("pattern")) {
+        let passes = false;
+        try {
+          if (new RegExp(needle.schema.pattern).test(resolvedObject)) passes = true;
+        } catch (e) {}
+        if (!passes) this.throw(`'${pathToString(needle.path)}' failed test ${needle.schema.pattern} patttern`, needle);
+      }
+
       if (needle.carryProperties) {
         needle.evaluatedProperties.add(pathToString(needle.path));
       }

@@ -354,7 +354,6 @@ npm run benchmark
 Cabidela supports most of JSON Schema specification, and should be useful for many applications, but it's not complete. **Currently** we do not support:
 
 - Multiple (array of) types `{ "type": ["number", "string"] }`
-- Regular expressions
 - Pattern properties
 - `dependentRequired`, `dependentSchemas`, `If-Then-Else`
 
