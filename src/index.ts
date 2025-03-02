@@ -1,9 +1,10 @@
-import { resolvePayload, pathToString } from "./helpers";
+import { resolvePayload, pathToString, traverseSchema } from "./helpers";
 
 export type CabidelaOptions = {
   applyDefaults?: boolean;
   errorMessages?: boolean;
   fullErrors?: boolean;
+  subSchemas?: Array<any>;
 };
 
 export type SchemaNavigation = {
@@ -19,25 +20,57 @@ export type SchemaNavigation = {
 };
 
 export class Cabidela {
-  public schema: any;
-  public options: CabidelaOptions;
+  private schema: any;
+  private options: CabidelaOptions;
+  private definitions: any = {};
 
   constructor(schema: any, options?: CabidelaOptions) {
     this.schema = schema;
     this.options = {
       fullErrors: true,
+      subSchemas: [],
       applyDefaults: false,
       errorMessages: false,
       ...(options || {}),
     };
+    if (this.schema.hasOwnProperty("$defs")) {
+      this.definitions["$defs"] = this.schema["$defs"];
+      delete this.schema["$defs"];
+    }
+    if ((this.options.subSchemas as []).length > 0) {
+      for (const subSchema of this.options.subSchemas as []) {
+        this.addSchema(subSchema, false);
+      }
+      traverseSchema(this.definitions, this.schema);
+    }
   }
 
   setSchema(schema: any) {
     this.schema = schema;
   }
 
+  addSchema(subSchema: any, combine: boolean = true) {
+    if (subSchema.hasOwnProperty("$id")) {
+      const url = URL.parse(subSchema["$id"]);
+      if (url) {
+        this.definitions[url.pathname.split("/").slice(-1)[0]] = subSchema;
+      } else {
+        throw new Error(
+          "subSchemas need a valid retrieval URI $id https://json-schema.org/understanding-json-schema/structuring#retrieval-uri",
+        );
+      }
+    } else {
+      throw new Error("subSchemas need $id https://json-schema.org/understanding-json-schema/structuring#id");
+    }
+    if (combine == true) traverseSchema(this.definitions, this.schema);
+  }
+
+  getSchema() {
+    return this.schema;
+  }
+
   setOptions(options: CabidelaOptions) {
-    this.options = options;
+    this.options = { ...this.options, ...options };
   }
 
   throw(message: string, needle: SchemaNavigation) {
@@ -73,7 +106,7 @@ export class Cabidela {
       for (let property of unevaluatedProperties) {
         if (
           this.parseSubSchema({
-            path: [property.split(".").slice(-1)[0]],
+            path: [property.split("/").slice(-1)[0]],
             schema: contextAdditionalProperties,
             payload: resolvedObject,
             evaluatedProperties: new Set(),
@@ -152,7 +185,7 @@ export class Cabidela {
           needle.evaluatedProperties.union(localEvaluatedProperties),
         ).size > 0
       ) {
-        this.throw(`required properties at '${pathToString(needle.path)}' is '${needle.schema.required}'`, needle);
+        this.throw(`required properties at '${pathToString(needle.path)}' are '${needle.schema.required}'`, needle);
       }
     }
     return matchCount ? true : false;
@@ -189,6 +222,22 @@ export class Cabidela {
   parseSubSchema(needle: SchemaNavigation): number {
     if (needle.schema == undefined) {
       this.throw(`No schema for path '${pathToString(needle.path)}'`, needle);
+    }
+
+    // https://json-schema.org/understanding-json-schema/reference/combining#not
+    if (needle.schema.hasOwnProperty("not")) {
+      let pass = false;
+      try {
+        this.parseSubSchema({
+          ...needle,
+          schema: needle.schema.not,
+        });
+      } catch (e: any) {
+        pass = true;
+      }
+      if (pass == false) {
+        this.throw(`not at '${pathToString(needle.path)}' not met`, needle);
+      }
     }
 
     // To validate against oneOf, the given data must be valid against exactly one of the given subschemas.
@@ -322,6 +371,14 @@ export class Cabidela {
             break;
         }
       }
+      if (needle.schema.hasOwnProperty("pattern")) {
+        let passes = false;
+        try {
+          if (new RegExp(needle.schema.pattern).test(resolvedObject)) passes = true;
+        } catch (e) {}
+        if (!passes) this.throw(`'${pathToString(needle.path)}' failed test ${needle.schema.pattern} patttern`, needle);
+      }
+
       if (needle.carryProperties) {
         needle.evaluatedProperties.add(pathToString(needle.path));
       }

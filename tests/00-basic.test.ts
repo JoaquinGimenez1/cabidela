@@ -1,4 +1,4 @@
-import { expect, test, describe, test } from "vitest";
+import { expect, test, describe } from "vitest";
 import { Cabidela } from "../src";
 import { getMetaData } from "../src/helpers";
 
