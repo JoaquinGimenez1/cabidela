@@ -17,7 +17,7 @@ jobs:
       - run: npm run build
       - run: npm test
 
-  publish-gpr:
+  publish-packages:
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -34,3 +34,15 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.10.0
+          registry-url: https://npm.pkg.github.com/
+      - run: npm install
+      - run: npm run build
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - run: gh release create v`cat package.json|jq -r .version` --generate-notes
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
