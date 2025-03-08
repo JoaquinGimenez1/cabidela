@@ -72,7 +72,7 @@ Cabidela takes a JSON-Schema and optional configuration flags:
 - `errorMessages`: boolean - If true, the validator will use custom `errorMessage` messages from the schema. Default is false.
 - `fullErrors`: boolean - If true, the validator will be more verbose when throwing errors for complex schemas (example: anyOf, oneOf's), set to false for shorter exceptions. Default is true.
 - `useMerge`: boolean - Set to true if you want to use the `$merge` keyword. Default is false. See below for more information.
-- `subSchema`: any[] - An optional array of sub-schemas that can be used with `$id` and `$ref`. See below for more information.
+- `subSchemas`: any[] - An optional array of sub-schemas that can be used with `$id` and `$ref`. See below for more information.
 
 Returns a validation object.
 
