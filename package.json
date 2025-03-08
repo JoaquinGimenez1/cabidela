@@ -1,6 +1,6 @@
 {
   "name": "@cloudflare/cabidela",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Cabidela is a small, fast, eval-less, Cloudflare Workers compatible, dynamic JSON Schema validator",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -27,6 +27,9 @@
     "README.md",
     "CHANGELOG.md"
   ],
+  "prettier": {
+    "embeddedLanguageFormatting": "auto"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/cloudflare/cabidela.git"
@@ -39,6 +42,7 @@
     "@vitest/ui": "^3.0.3",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
+    "ajv-merge-patch": "^5.0.1",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.3"

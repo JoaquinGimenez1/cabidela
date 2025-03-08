@@ -23,6 +23,9 @@ export class FakeCabidela {
         strict: false,
         useDefaults: this.options.applyDefaults ? true : false,
       });
+      if (this.options.useMerge) {
+        require("ajv-merge-patch")(this.ajv);
+      }
       if (this.options.subSchemas) {
         this.options.subSchemas.forEach((subSchema: any) => {
           this.ajv.addSchema(subSchema);
@@ -67,7 +70,7 @@ export class FakeCabidela {
       const valid = this.validator(payload);
       if (!valid) {
         const description = this.validator.errors
-          .map((e:any) => {
+          .map((e: any) => {
             const instancePath = e.instancePath.split("/").join("");
             return instancePath === "" ? e.message : `'${instancePath}' ${e.message}`;
           })
