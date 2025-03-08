@@ -1,3 +1,5 @@
+import type { CabidelaOptions } from ".";
+
 export type metaData = {
   types: Set<string>;
   size: number;
@@ -21,24 +23,50 @@ export const parse$ref = (ref: string) => {
   return { $id, $path };
 };
 
-export const traverseSchema = (definitions: any, obj: any, cb: any = () => {}) => {
-  Object.keys(obj).forEach((key) => {
-    if (obj[key] !== null && typeof obj[key] === "object") {
-      traverseSchema(definitions, obj[key], (value: any) => {
-        obj[key] = value;
-      });
-    } else {
-      if (key === "$ref") {
-        const { $id, $path } = parse$ref(obj[key]);
-        const { resolvedObject } = resolvePayload($path, definitions[$id]);
-        if (resolvedObject) {
-          cb(resolvedObject);
-        } else {
-          throw new Error(`Could not resolve '${obj[key]}' $ref`);
+function deepMerge(target: any, source: any) {
+  const result = Array.isArray(target) && Array.isArray(source) ? target.concat(source) : { ...target, ...source };
+  for (const key of Object.keys(result)) {
+    result[key] =
+      typeof target[key] == "object" && typeof source[key] == "object"
+        ? deepMerge(target[key], source[key])
+        : structuredClone(result[key]);
+  }
+  return result;
+}
+
+export const traverseSchema = (options: CabidelaOptions, definitions: any, obj: any, cb?: any) => {
+  let hits: number;
+  do {
+    hits = 0;
+    Object.keys(obj).forEach((key) => {
+      if (obj[key] !== null && typeof obj[key] === "object") {
+        traverseSchema(options, definitions, obj[key], (value: any) => {
+          hits++;
+          obj[key] = value;
+        });
+        if (options.useMerge && key === "$merge") {
+          const merge = deepMerge(obj[key].source, obj[key].with);
+          if (cb) {
+            cb(merge);
+          } else {
+            // root level merge
+            Object.assign(obj, merge);
+            delete obj[key];
+          }
+        }
+      } else {
+        if (key === "$ref") {
+          const { $id, $path } = parse$ref(obj[key]);
+          const { resolvedObject } = resolvePayload($path, definitions[$id]);
+          if (resolvedObject) {
+            cb(resolvedObject);
+          } else {
+            throw new Error(`Could not resolve '${obj[key]}' $ref`);
+          }
         }
       }
-    }
-  });
+    });
+  } while (hits > 0);
 };
 
 /* Resolves a path in an object

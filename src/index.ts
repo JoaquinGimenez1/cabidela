@@ -2,6 +2,7 @@ import { resolvePayload, pathToString, traverseSchema } from "./helpers";
 
 export type CabidelaOptions = {
   applyDefaults?: boolean;
+  useMerge?: boolean;
   errorMessages?: boolean;
   fullErrors?: boolean;
   subSchemas?: Array<any>;
@@ -41,7 +42,9 @@ export class Cabidela {
       for (const subSchema of this.options.subSchemas as []) {
         this.addSchema(subSchema, false);
       }
-      traverseSchema(this.definitions, this.schema);
+    }
+    if (this.options.useMerge || (this.options.subSchemas as []).length > 0) {
+      traverseSchema(this.options, this.definitions, this.schema);
     }
   }
 
@@ -62,7 +65,7 @@ export class Cabidela {
     } else {
       throw new Error("subSchemas need $id https://json-schema.org/understanding-json-schema/structuring#id");
     }
-    if (combine == true) traverseSchema(this.definitions, this.schema);
+    if (combine == true) traverseSchema(this.options, this.definitions, this.schema);
   }
 
   getSchema() {
