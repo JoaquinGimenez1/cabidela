@@ -18,13 +18,14 @@ export const includesAll = (arr: Array<any>, values: Array<any>) => {
 // https://json-schema.org/understanding-json-schema/structuring#dollarref
 export const parse$ref = (ref: string) => {
   const parts = ref.split("#");
-  const $id = parts[0];
-  const $path = parts[1].split("/").filter((part: string) => part !== "");
-  return { $id, $path };
+  return {
+    $id: parts[0],
+    $path: parts[1].split("/").filter((part: string) => part != ""),
+  };
 };
 
 function deepMerge(target: any, source: any) {
-  const result = Array.isArray(target) && Array.isArray(source) ? target.concat(source) : { ...target, ...source };
+  const result = Array(target) && Array.isArray(source) ? target.concat(source) : { ...target, ...source };
   for (const key of Object.keys(result)) {
     result[key] =
       typeof target[key] == "object" && typeof source[key] == "object"
@@ -34,39 +35,42 @@ function deepMerge(target: any, source: any) {
   return result;
 }
 
-export const traverseSchema = (options: CabidelaOptions, definitions: any, obj: any, cb?: any) => {
-  let hits: number;
-  do {
-    hits = 0;
-    Object.keys(obj).forEach((key) => {
-      if (obj[key] !== null && typeof obj[key] === "object") {
-        traverseSchema(options, definitions, obj[key], (value: any) => {
-          hits++;
-          obj[key] = value;
-        });
-        if (options.useMerge && key === "$merge") {
-          const merge = deepMerge(obj[key].source, obj[key].with);
-          if (cb) {
-            cb(merge);
-          } else {
-            // root level merge
-            Object.assign(obj, merge);
-            delete obj[key];
+export const traverseSchema = (options: CabidelaOptions, definitions: any, obj: any) => {
+  const ts = (obj: any, cb?: any) => {
+    let hits: number;
+    do {
+      hits = 0;
+      for (const key of Object.keys(obj)) {
+        if (typeof obj[key] == "object") {
+          ts(obj[key], (value: any) => {
+            obj[key] = value;
+            hits++;
+          });
+          if (options.useMerge && key == "$merge") {
+            const merge = deepMerge(obj[key].source, obj[key].with);
+            if (cb) {
+              cb(merge);
+            } else {
+              // root level merge
+              Object.assign(obj, merge);
+              delete obj[key];
+            }
           }
-        }
-      } else {
-        if (key === "$ref") {
-          const { $id, $path } = parse$ref(obj[key]);
-          const { resolvedObject } = resolvePayload($path, definitions[$id]);
-          if (resolvedObject) {
-            cb(resolvedObject);
-          } else {
-            throw new Error(`Could not resolve '${obj[key]}' $ref`);
+        } else {
+          if (key == "$ref") {
+            const { $id, $path } = parse$ref(obj[key]);
+            const { resolvedObject } = resolvePayload($path, definitions[$id]);
+            if (resolvedObject) {
+              cb(resolvedObject);
+            } else {
+              throw new Error(`Could not resolve '${obj[key]}' $ref`);
+            }
           }
         }
       }
-    });
-  } while (hits > 0);
+    } while (hits > 0);
+  };
+  ts(obj);
 };
 
 /* Resolves a path in an object
