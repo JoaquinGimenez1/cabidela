@@ -51,7 +51,8 @@ export const traverseSchema = (options: CabidelaOptions, definitions: any, obj: 
             if (cb) {
               cb(merge);
             } else {
-              // root level merge
+              // root level
+              hits++;
               Object.assign(obj, merge);
               delete obj[key];
             }
@@ -61,7 +62,14 @@ export const traverseSchema = (options: CabidelaOptions, definitions: any, obj: 
             const { $id, $path } = parse$ref(obj[key]);
             const { resolvedObject } = resolvePayload($path, definitions[$id]);
             if (resolvedObject) {
-              cb(resolvedObject);
+              if (cb) {
+                cb(resolvedObject);
+              } else {
+                // root level
+                hits++;
+                Object.assign(obj, resolvedObject);
+                delete obj[key];
+              }
             } else {
               throw new Error(`Could not resolve '${obj[key]}' $ref`);
             }
