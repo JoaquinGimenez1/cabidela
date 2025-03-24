@@ -3,7 +3,7 @@ import { FakeCabidela } from "./lib/fake-cabidela";
 import { getMetaData } from "../src/helpers";
 
 describe("ref and subschema", () => {
-  let schema:any;
+  let schema: any;
   if (process.env.AJV) {
     schema = {
       $id: "http://example.com/schemas/main",
@@ -68,6 +68,73 @@ describe("ref and subschema", () => {
   test.skipIf(process.env.AJV)("consolidated schema", () => {
     const cabidela = new FakeCabidela(schema, { subSchemas: [contactSchema] });
     const cs = cabidela.getSchema();
+    expect(cs).toStrictEqual({
+      $id: "http://example.com/schemas/main",
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+        },
+        contacts: {
+          type: "object",
+          properties: {
+            email: {
+              type: "string",
+            },
+            phone: {
+              type: "string",
+            },
+          },
+          required: ["email", "phone"],
+        },
+        address: {
+          type: "object",
+          properties: {
+            street: {
+              type: "string",
+            },
+            city: {
+              type: "string",
+            },
+            zip: {
+              type: "string",
+            },
+            country: {
+              type: "string",
+            },
+          },
+          required: ["street", "city", "zip", "country"],
+        },
+        balance: {
+          type: "object",
+          properties: {
+            currency: {
+              type: "string",
+            },
+            amount: {
+              type: "number",
+            },
+          },
+          required: ["currency", "amount"],
+        },
+      },
+      required: ["name", "contacts", "address"],
+    });
+  });
+
+  test.skipIf(process.env.AJV)("consolidated root schema", () => {
+    const cabidela = new FakeCabidela(
+      {
+        $ref: "customer#/contacts",
+      },
+      { subSchemas: [contactSchema] },
+    );
+    const cs = cabidela.getSchema();
+    expect(cs).toStrictEqual({
+      type: "object",
+      properties: { email: { type: "string" }, phone: { type: "string" } },
+      required: ["email", "phone"],
+    });
   });
 
   test.skipIf(process.env.AJV)("$defs", () => {
